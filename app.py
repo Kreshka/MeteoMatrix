@@ -85,14 +85,16 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.markdown('<div class="centered-title">MeteoMatrix</div>', unsafe_allow_html=True)
+def get_pos_by_place_name(place_name):
+    url_for_cords = f"https://geocode-maps.yandex.ru/v1/?apikey=0c288416-3e87-4e76-ab53-b9dc30931908&geocode={place_name}&format=json"
 
+    page = requests.get(url_for_cords)
+    lon, lat = page.json()["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"][
+        "pos"].split()
+    return lon, lat
 def get_weather(place=None, pos=None):
     if pos is None:
-        url_for_cords = f"https://geocode-maps.yandex.ru/v1/?apikey=0c288416-3e87-4e76-ab53-b9dc30931908&geocode={place}&format=json"
-
-        page = requests.get(url_for_cords)
-        lon, lat = page.json()["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"][
-            "pos"].split()
+        lon, lat = get_pos_by_place_name(place)
     else:
         lon, lat = pos
 
@@ -148,9 +150,11 @@ with mcol2:
     m = folium.Map(location=[55.755863, 37.6177], zoom_start=10)
     map_data = st_folium(m, width=568, height=330)
 
-    name = st.text_input("Введите любое место", "Москва")
+
+    name = st.text_input("Введите любое место", "Москва2.0")
     if st.button("Показать погоду"):
         visualize_weather(place=name.title())
+        m = folium.Map(location=get_pos_by_place_name(name.title()), zoom_start=10)
     elif map_data.get("last_clicked"):
         latt = map_data["last_clicked"]["lat"]
         lng = map_data["last_clicked"]["lng"]
